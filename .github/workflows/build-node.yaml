@@ -29,8 +29,8 @@ jobs:
       # 2. 下载 Node.js 源码
       - name: 下载 Node.js ${{ env.NODE_VERSION }} 源码
         run: |
-          wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
-          tar xzf node-${{ env.NODE_VERSION }}.tar.gz
+          wget https://nodejs.org/dist/v18.19.1/node-v18.19.1.tar.gz
+          tar xzf node-18.19.1.tar.gz
       # 3. 在 GLIBC 2.27 容器内编译
       - name: 在 ARM64/GLIBC 2.27 环境中编译 Node.js
         # 使用 Docker 容器进行编译，以精确控制 GLIBC 版本和目标架构
@@ -45,8 +45,8 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/node-${{ env.NODE_VERSION }} \
             ${{ env.DOCKER_IMAGE }} \
-            /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git\
-            ./configure --enable-static && \
+            /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git \
+            ./configure --fully-static --without-intl --enable-static && \
             make -j$(nproc)"
 
       # 4. 重命名并打包编译产物
