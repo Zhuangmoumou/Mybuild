@@ -63,9 +63,7 @@ jobs:
             --dest-cpu=arm64 \
             --fully-static \
             --without-intl \
-            --cross-compiling \
-            --with-arm-float-abi=hard \
-            --with-arm-fpu=neon
+            --cross-compiling
           
           # 6. 编译主机工具（使用主机架构）
           # 首先临时使用主机编译器编译必要的工具
