@@ -21,6 +21,48 @@ jobs:
         uses: actions/checkout@v4
       # 1. 设置 QEMU 以启用 ARM64 仿真
       # 允许在 x64 运行器上运行 ARM64 架构的 Docker 镜像
+      - name: Initialization environment
+      id: init
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo systemctl is-active docker || sudo systemctl start docker
+        docker rmi $(docker images -q) 2>/dev/null || true
+        [[ -n "${AGENT_TOOLSDIRECTORY}" ]] && sudo rm -rf "${AGENT_TOOLSDIRECTORY}"
+        #sudo rm -rf /usr/share/dotnet /etc/apt/sources.list.d /usr/local/lib/android 2>/dev/null
+        #sudo swapoff -a
+        #sudo rm -f /swapfile /mnt/swapfile
+        sudo -E apt-get -y update
+        #sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* powershell openjdk* mongodb* moby* || true
+        #sudo -E apt-get -y install $(curl -fsSL https://is.gd/depend_ubuntu2204_armbian)
+        sudo -E systemctl daemon-reload
+        sudo -E apt-get -y full-upgrade
+        sudo -E apt-get -y autoremove --purge
+        sudo -E apt-get clean
+        #sudo sed -i '/NVM_DIR/d;/skel/d' /root/{.bashrc,.profile}
+        #sudo rm -rf ~/{.cargo,.dotnet,.rustup}
+        sudo -E timedatectl set-timezone "Asia/Shanghai"
+        echo "status=success" >> ${GITHUB_OUTPUT}
+
+    - name: Create simulated physical disk
+      run: |
+        mnt_size=$(expr $(df -h /mnt | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 1)
+        root_size=$(expr $(df -h / | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 4)
+        sudo truncate -s "${mnt_size}"G /mnt/mnt.img
+        sudo truncate -s "${root_size}"G /root.img
+        sudo losetup /dev/loop6 /mnt/mnt.img
+        sudo losetup /dev/loop7 /root.img
+        sudo pvcreate /dev/loop6
+        sudo pvcreate /dev/loop7
+        sudo vgcreate github /dev/loop6 /dev/loop7
+        sudo lvcreate -n runner -l 100%FREE github
+        sudo mkfs.xfs /dev/github/runner
+        sudo mkdir -p /builder
+        sudo mount /dev/github/runner /builder
+        sudo chown -R runner.runner /builder
+        df -Th
+      # 1. 设置 QEMU 以启用 ARM64 仿真
+      # 允许在 x64 运行器上运行 ARM64 架构的 Docker 镜像
       - name: 设置 QEMU
         uses: docker/setup-qemu-action@v3
         with:
@@ -28,11 +70,13 @@ jobs:
 
       # 2. 下载 Node.js 源码
       - name: 下载 Node.js ${{ env.NODE_VERSION }} 源码
+        working-directory: /builder
         run: |
           wget https://nodejs.org/dist/v18.19.1/node-v18.19.1.tar.gz
           tar xzf node-v18.19.1.tar.gz
       # 3. 在 GLIBC 2.27 容器内编译
       - name: 在 ARM64/GLIBC 2.27 环境中编译 Node.js
+        working-directory: /builder
         # 使用 Docker 容器进行编译，以精确控制 GLIBC 版本和目标架构
         run: |
           # 使用 docker run --platform 配合 QEMU 启动 ARM64 容器
@@ -42,13 +86,14 @@ jobs:
           # --without-intl: 取消国际化支持
           # --fully-static: 静态编译
           docker run --platform linux/${{ env.TARGET_ARCH }} \
-            -v ${{ github.workspace }}:/workspace \
+            -v /builder:/workspace \
             -w /workspace/node-${{ env.NODE_VERSION }} \
             ${{ env.DOCKER_IMAGE }} \
             /bin/bash -c "apt-get update && apt-get install -y software-properties-common wget build-essential python3 git && add-apt-repository ppa:ubuntu-toolchain-r/test && apt update && apt-get install -y gcc-11 g++-11 ninja-build && export CC=/usr/bin/gcc-11 && export CXX=/usr/bin/g++-11 && ./configure --fully-static --without-intl --enable-static --ninja && ninja -j$(nproc) -C ./out/Release"
 
       # 4. 重命名并打包编译产物
       - name: 打包编译结果
+        working-directory: /builder
         run: |
           mkdir -p build-output
           # 拷贝编译好的静态二进制文件
