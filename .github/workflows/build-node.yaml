@@ -1,0 +1,67 @@
+name: 编译 Node.js v18.19.1 (ARM64, 静态, GLIBC 2.27)
+
+on:
+  # 允许手动触发工作流程
+  workflow_dispatch:
+
+jobs:
+  build_node_arm64_static:
+    # 使用标准的 Ubuntu x64 运行器
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: v18.19.1
+      # Ubuntu 18.04 (bionic) 默认使用 GLIBC 2.27
+      DOCKER_IMAGE: arm64v8/ubuntu:bionic
+      TARGET_ARCH: arm64
+      OUTPUT_FILENAME: node-v18.19.1-static-arm64-glibc2.27
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      # 1. 设置 QEMU 以启用 ARM64 仿真
+      # 允许在 x64 运行器上运行 ARM64 架构的 Docker 镜像
+      - name: 设置 QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      # 2. 下载 Node.js 源码
+      - name: 下载 Node.js ${{ env.NODE_VERSION }} 源码
+        run: |
+          wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
+          tar xzf node-${{ env.NODE_VERSION }}.tar.gz
+      # 3. 在 GLIBC 2.27 容器内编译
+      - name: 在 ARM64/GLIBC 2.27 环境中编译 Node.js
+        # 使用 Docker 容器进行编译，以精确控制 GLIBC 版本和目标架构
+        run: |
+          # 使用 docker run --platform 配合 QEMU 启动 ARM64 容器
+          # -v 挂载工作目录 /workspace
+          # -w 设置工作目录到源码文件夹
+          # /bin/bash -c "..." 执行编译命令
+          # --without-intl: 取消国际化支持
+          # --fully-static: 静态编译
+          docker run --platform linux/${{ env.TARGET_ARCH }} \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/node-${{ env.NODE_VERSION }} \
+            ${{ env.DOCKER_IMAGE }} \
+            /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git\
+            ./configure --without-intl --fully-static && \
+            make -j$(nproc)"
+
+      # 4. 重命名并打包编译产物
+      - name: 打包编译结果
+        run: |
+          mkdir -p build-output
+          # 拷贝编译好的静态二进制文件
+          cp node-${{ env.NODE_VERSION }}/out/Release/node build-output/${{ env.OUTPUT_FILENAME }}
+          # 检查文件类型，确认是 arm64 静态链接
+          file build-output/${{ env.OUTPUT_FILENAME }}
+          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz build-output/
+
+      # 5. 上传产物
+      - name: 上传编译后的二进制文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OUTPUT_FILENAME }}
+          path: ${{ env.OUTPUT_FILENAME }}.tar.gz
