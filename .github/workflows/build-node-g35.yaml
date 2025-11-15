@@ -1,8 +1,6 @@
 name: Build Node v18.19.1 test
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch: # 允许手动触发
 
 jobs:
