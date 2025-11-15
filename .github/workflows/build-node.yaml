@@ -56,7 +56,7 @@ jobs:
         with:
           platforms: all
 
-      - name: 下载 Node.js ${{ env.NODE_VERSION }} 源码
+      - name: 下载 Node.js v18.19.1 源码
         working-directory: /builder
         run: |
           wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
