@@ -51,7 +51,7 @@ jobs:
           # 2. 设置官方交叉编译器，系统会自动在 PATH 中找到它们
           export CC="aarch64-linux-gnu-gcc"
           export CXX="aarch64-linux-gnu-g++"
-          
+          export HOST_ARCH=x64
           # 3. 设置静态链接和库/头文件路径
           # -static 强制静态链接
           # -L 指定库搜索路径，指向 dictpen-libs/lib
@@ -68,7 +68,8 @@ jobs:
             --dest-cpu=arm64 \
             --fully-static \
             --without-intl \
-            --cross-compiling
+            --cross-compiling \
+            --build-v8-with-cross-compiling-tools
             
           # 5. 开始编译
           make -j$(nproc)
