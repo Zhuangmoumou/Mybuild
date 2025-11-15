@@ -30,7 +30,7 @@ jobs:
       - name: 下载 Node.js ${{ env.NODE_VERSION }} 源码
         run: |
           wget https://nodejs.org/dist/v18.19.1/node-v18.19.1.tar.gz
-          tar xzf node-18.19.1.tar.gz
+          tar xzf node-v18.19.1.tar.gz
       # 3. 在 GLIBC 2.27 容器内编译
       - name: 在 ARM64/GLIBC 2.27 环境中编译 Node.js
         # 使用 Docker 容器进行编译，以精确控制 GLIBC 版本和目标架构
