@@ -1,4 +1,4 @@
-name: Build Node v18.19.1 test
+name: Build Node v18.19.1 (ARM64, 静态, Host/Target Cross-Compile)
 
 on:
   push:
@@ -53,18 +53,18 @@ jobs:
           export LDFLAGS="-static -L$LIBS_DIR/lib"
           export CFLAGS="-I$LIBS_DIR/include"
           export CXXFLAGS="-I$LIBS_DIR/include"
+
+          # 4. **关键修正**: 使用 GYP_DEFINES 环境变量来指定主机和目标架构
+          export GYP_DEFINES="host_arch=x64 target_arch=arm64"
           
-          # 4. 运行 configure，并明确指定主机和目标架构
-          # --dest-cpu=arm64: 目标架构
-          # --host-arch=x64:  主机架构 (解决 Exec format error 的关键)
+          # 5. 运行 configure
           ./configure \
             --dest-cpu=arm64 \
-            --host-arch=x64 \
             --fully-static \
             --without-intl \
             --cross-compiling
             
-          # 5. 开始编译
+          # 6. 开始编译
           make -j$(nproc)
 
       - name: 打包编译结果
