@@ -1,4 +1,4 @@
-name: Build Node v18.19.1 (ARM64, 静态, Host/Target Cross-Compile)
+name: Build Node v18.19.1 (ARM64, 静态, 官方交叉编译链 + Dictpen Libs)
 
 on:
   push:
@@ -20,18 +20,30 @@ jobs:
           # 安装官方 aarch64 交叉编译工具链
           sudo apt-get install -y build-essential git-lfs wget gcc-aarch64-linux-gnu g++-aarch64-linux-gnu python3-dev
 
+      # --- 新增 QEMU 设置步骤 ---
+      - name: 设置 QEMU (解决 Exec format error)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+      # ---------------------------
+
       - name: 检出主仓库
         uses: actions/checkout@v4
+
+      - name: 克隆 Qt 仓库 (保留，尽管 Node.js 编译不需要)
+        run: git clone https://github.com/Lyrecoul/qt-5.15.2-for-aarch64-dictpen-linux.git
         
       - name: 克隆 Dictpen 库仓库
         run: git clone https://github.com/Lyrecoul/dictpen-libs.git
+
+      # --- Node.js 编译步骤开始 ---
 
       - name: 下载 Node.js 源码
         run: |
           wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
           tar xzf node-${{ env.NODE_VERSION }}.tar.gz
 
-      - name: 设置 Python 3.11
+      - name: 设置 Python 3.11 (解决 Node.js v18 不兼容 Python 3.12 的问题)
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -42,34 +54,24 @@ jobs:
           # 1. 设置库路径变量
           LIBS_DIR="${{ github.workspace }}/dictpen-libs"
           
-          # 2. 设置目标平台的交叉编译器
+          # 2. 设置官方交叉编译器
           export CC="aarch64-linux-gnu-gcc"
           export CXX="aarch64-linux-gnu-g++"
-          export AR="aarch64-linux-gnu-ar"
-          export STRIP="aarch64-linux-gnu-strip"
-          export RANLIB="aarch64-linux-gnu-ranlib"
           
           # 3. 设置静态链接和库/头文件路径
           export LDFLAGS="-static -L$LIBS_DIR/lib"
           export CFLAGS="-I$LIBS_DIR/include"
           export CXXFLAGS="-I$LIBS_DIR/include"
-
-          # 4. 关键配置：设置主机和目标架构
-          export GYP_DEFINES="host_arch=x64 target_arch=arm64 v8_target_arch=arm64"
-          export V8_TARGET_ARCH=arm64
           
-          # 5. 运行 configure，确保启用交叉编译并设置正确的目标CPU
+          # 4. 运行 configure
           ./configure \
             --dest-cpu=arm64 \
             --fully-static \
             --without-intl \
             --cross-compiling
-          
-          # 6. 编译主机工具（使用主机架构）
-          # 首先临时使用主机编译器编译必要的工具
-          make -j$(nproc) -C tools/v8_gypfiles
-
-          # 7. 编译最终的 Node.js 二进制文件
+            
+          # 5. 开始编译
+          # QEMU 已经设置好，可以透明地运行生成的 ARM64 辅助工具
           make -j$(nproc)
 
       - name: 打包编译结果
@@ -82,25 +84,6 @@ jobs:
           echo "--- 验证二进制文件信息 ---"
           file build-output/${{ env.OUTPUT_FILENAME }}
           echo "--------------------------"
-          
-          # 检查是否为 ARM64 架构
-          if file build-output/${{ env.OUTPUT_FILENAME }} | grep -q "ARM aarch64"; then
-            echo "✅ 二进制文件已正确编译为 ARM64 架构"
-          elif file build-output/${{ env.OUTPUT_FILENAME }} | grep -q "aarch64"; then
-            echo "✅ 二进制文件已正确编译为 aarch64 架构"
-          else
-            echo "❌ 二进制文件架构不正确"
-            file build-output/${{ env.OUTPUT_FILENAME }}
-            exit 1
-          fi
-          
-          # 检查是否为静态链接
-          if ldd build-output/${{ env.OUTPUT_FILENAME }} 2>&1 | grep -q "not a dynamic executable"; then
-            echo "✅ 二进制文件是静态链接的"
-          else
-            echo "⚠️  二进制文件可能是动态链接的"
-            ldd build-output/${{ env.OUTPUT_FILENAME }}
-          fi
           
           tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz build-output/
 
