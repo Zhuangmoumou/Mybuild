@@ -1,6 +1,8 @@
 name: Build Node v18.19.1 test
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch: # 允许手动触发
 
 jobs:
@@ -21,55 +23,46 @@ jobs:
       - name: 检出主仓库
         uses: actions/checkout@v4
 
-      - name: 克隆 Qt 仓库 (保留，尽管 Node.js 编译不需要)
+      - name: 克隆 Qt 仓库 (保留)
         run: git clone https://github.com/Lyrecoul/qt-5.15.2-for-aarch64-dictpen-linux.git
         
-      # --- 移除自定义 GCC 仓库克隆步骤 ---
-
       - name: 克隆 Dictpen 库仓库
         run: git clone https://github.com/Lyrecoul/dictpen-libs.git
-
-      # --- Node.js 编译步骤开始 ---
 
       - name: 下载 Node.js 源码
         run: |
           wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
           tar xzf node-${{ env.NODE_VERSION }}.tar.gz
 
-      - name: 设置 Python 3.11 (解决 Node.js v18 不兼容 Python 3.12 的问题)
+      - name: 设置 Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: 交叉编译 Node.js
-        # 进入 Node.js 源码目录进行编译
         working-directory: ${{ github.workspace }}/node-${{ env.NODE_VERSION }}
         run: |
           # 1. 设置库路径变量
           LIBS_DIR="${{ github.workspace }}/dictpen-libs"
           
-          # 2. 设置官方交叉编译器，系统会自动在 PATH 中找到它们
+          # 2. 设置目标平台的交叉编译器
           export CC="aarch64-linux-gnu-gcc"
           export CXX="aarch64-linux-gnu-g++"
-          # export HOST_ARCH=x64
+          
           # 3. 设置静态链接和库/头文件路径
-          # -static 强制静态链接
-          # -L 指定库搜索路径，指向 dictpen-libs/lib
-          # -I 指定头文件搜索路径，指向 dictpen-libs/include
           export LDFLAGS="-static -L$LIBS_DIR/lib"
           export CFLAGS="-I$LIBS_DIR/include"
           export CXXFLAGS="-I$LIBS_DIR/include"
           
-          # 4. 运行 configure
+          # 4. 运行 configure，并明确指定主机和目标架构
           # --dest-cpu=arm64: 目标架构
-          # --fully-static: 强制完全静态链接
-          # --without-intl: 禁用国际化
+          # --host-arch=x64:  主机架构 (解决 Exec format error 的关键)
           ./configure \
             --dest-cpu=arm64 \
+            --host-arch=x64 \
             --fully-static \
             --without-intl \
-            --cross-compiling \
-            --cross-compiling-toolchain=x64-arm64
+            --cross-compiling
             
           # 5. 开始编译
           make -j$(nproc)
@@ -91,4 +84,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.OUTPUT_FILENAME }}
-          path: ${{ env.OUTPUT_FILENAME }}.tar.gz```
+          path: ${{ env.OUTPUT_FILENAME }}.tar.gz
