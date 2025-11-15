@@ -69,7 +69,7 @@ jobs:
             --fully-static \
             --without-intl \
             --cross-compiling \
-            --cross-compiling-toolchain=arm-linux-gnueabihf
+            --cross-compiling-toolchain=x64-arm64
             
           # 5. 开始编译
           make -j$(nproc)
