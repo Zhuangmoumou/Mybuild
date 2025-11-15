@@ -46,7 +46,7 @@ jobs:
             -w /workspace/node-${{ env.NODE_VERSION }} \
             ${{ env.DOCKER_IMAGE }} \
             /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git\
-            ./configure --without-intl --fully-static && \
+            ./configure --with-intl=none --fully-static && \
             make -j$(nproc)"
 
       # 4. 重命名并打包编译产物
