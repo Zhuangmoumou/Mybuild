@@ -45,9 +45,7 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/node-${{ env.NODE_VERSION }} \
             ${{ env.DOCKER_IMAGE }} \
-            /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git \
-            ./configure --fully-static --without-intl --enable-static && \
-            make -j$(nproc)"
+            /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git && ./configure --fully-static --without-intl --enable-static && make -j$(nproc)"
 
       # 4. 重命名并打包编译产物
       - name: 打包编译结果
