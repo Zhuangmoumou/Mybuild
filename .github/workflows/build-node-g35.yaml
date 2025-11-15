@@ -22,9 +22,6 @@ jobs:
 
       - name: 检出主仓库
         uses: actions/checkout@v4
-
-      - name: 克隆 Qt 仓库 (保留)
-        run: git clone https://github.com/Lyrecoul/qt-5.15.2-for-aarch64-dictpen-linux.git
         
       - name: 克隆 Dictpen 库仓库
         run: git clone https://github.com/Lyrecoul/dictpen-libs.git
