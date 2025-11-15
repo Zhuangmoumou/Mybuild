@@ -45,7 +45,7 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -w /workspace/node-${{ env.NODE_VERSION }} \
             ${{ env.DOCKER_IMAGE }} \
-            /bin/bash -c "apt-get update && apt-get install -y wget build-essential python3 git && ./configure --fully-static --without-intl --enable-static && make -j$(nproc)"
+            /bin/bash -c "apt-get update && apt-get install -y software-properties-common wget build-essential python3 git && add-apt-repository ppa:ubuntu-toolchain-r/test && sudo apt update && sudo apt-get install -y gcc-11 g++-11 ninja-build && export CC=/usr/bin/gcc-11 && export CXX=/usr/bin/g++-11 && ./configure --fully-static --without-intl --enable-static --ninja && ninja -j$(nproc) -C ./out/Release"
 
       # 4. 重命名并打包编译产物
       - name: 打包编译结果
