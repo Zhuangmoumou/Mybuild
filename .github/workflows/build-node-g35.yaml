@@ -47,6 +47,7 @@ jobs:
           export CXX="aarch64-linux-gnu-g++"
           export AR="aarch64-linux-gnu-ar"
           export STRIP="aarch64-linux-gnu-strip"
+          export RANLIB="aarch64-linux-gnu-ranlib"
           
           # 3. 设置静态链接和库/头文件路径
           export LDFLAGS="-static -L$LIBS_DIR/lib"
@@ -63,32 +64,14 @@ jobs:
             --fully-static \
             --without-intl \
             --cross-compiling \
-            --without-snapshot \
-            --without-node-snapshot
+            --with-arm-float-abi=hard \
+            --with-arm-fpu=neon
           
-          # 6. 只编译 V8 的工具（使用主机架构）
-          make -j$(nproc) bytecode_builtins_list_generator mksnapshot torque
+          # 6. 编译主机工具（使用主机架构）
+          # 首先临时使用主机编译器编译必要的工具
+          make -j$(nproc) -C tools/v8_gypfiles
 
-          # 7. 备份主机工具
-          mkdir -p host_tools
-          cp out/Release/bytecode_builtins_list_generator host_tools/
-          cp out/Release/mksnapshot host_tools/
-          cp out/Release/torque host_tools/
-
-          # 8. 清理目标架构的构建文件
-          make clean
-
-          # 9. 重新配置，使用交叉编译
-          ./configure \
-            --dest-cpu=arm64 \
-            --fully-static \
-            --without-intl \
-            --cross-compiling
-
-          # 10. 恢复主机工具
-          cp host_tools/* out/Release/
-
-          # 11. 编译最终的 Node.js 二进制文件
+          # 7. 编译最终的 Node.js 二进制文件
           make -j$(nproc)
 
       - name: 打包编译结果
@@ -105,9 +88,20 @@ jobs:
           # 检查是否为 ARM64 架构
           if file build-output/${{ env.OUTPUT_FILENAME }} | grep -q "ARM aarch64"; then
             echo "✅ 二进制文件已正确编译为 ARM64 架构"
+          elif file build-output/${{ env.OUTPUT_FILENAME }} | grep -q "aarch64"; then
+            echo "✅ 二进制文件已正确编译为 aarch64 架构"
           else
             echo "❌ 二进制文件架构不正确"
+            file build-output/${{ env.OUTPUT_FILENAME }}
             exit 1
+          fi
+          
+          # 检查是否为静态链接
+          if ldd build-output/${{ env.OUTPUT_FILENAME }} 2>&1 | grep -q "not a dynamic executable"; then
+            echo "✅ 二进制文件是静态链接的"
+          else
+            echo "⚠️  二进制文件可能是动态链接的"
+            ldd build-output/${{ env.OUTPUT_FILENAME }}
           fi
           
           tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz build-output/
