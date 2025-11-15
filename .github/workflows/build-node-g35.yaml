@@ -1,4 +1,4 @@
-name: Build Node v18.19.1 (ARM64, 静态, 官方交叉编译链 + Dictpen Libs)
+name: Build Node v18.19.1 (ARM64, 静态, QEMU 辅助交叉编译)
 
 on:
   push:
@@ -20,8 +20,9 @@ jobs:
           # 安装官方 aarch64 交叉编译工具链
           sudo apt-get install -y build-essential git-lfs wget gcc-aarch64-linux-gnu g++-aarch64-linux-gnu python3-dev
 
-      # --- 新增 QEMU 设置步骤 ---
-      - name: 设置 QEMU (解决 Exec format error)
+      # --- 重新引入 QEMU 设置步骤 ---
+      # QEMU 允许 x86_64 主机透明地运行 ARM64 辅助工具，解决 Exec format error
+      - name: 设置 QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
@@ -29,21 +30,16 @@ jobs:
 
       - name: 检出主仓库
         uses: actions/checkout@v4
-
-      - name: 克隆 Qt 仓库 (保留，尽管 Node.js 编译不需要)
-        run: git clone https://github.com/Lyrecoul/qt-5.15.2-for-aarch64-dictpen-linux.git
         
       - name: 克隆 Dictpen 库仓库
         run: git clone https://github.com/Lyrecoul/dictpen-libs.git
-
-      # --- Node.js 编译步骤开始 ---
 
       - name: 下载 Node.js 源码
         run: |
           wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
           tar xzf node-${{ env.NODE_VERSION }}.tar.gz
 
-      - name: 设置 Python 3.11 (解决 Node.js v18 不兼容 Python 3.12 的问题)
+      - name: 设置 Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -54,7 +50,8 @@ jobs:
           # 1. 设置库路径变量
           LIBS_DIR="${{ github.workspace }}/dictpen-libs"
           
-          # 2. 设置官方交叉编译器
+          # 2. 设置目标平台的交叉编译器
+          # QEMU 存在时，只需要设置目标编译器即可
           export CC="aarch64-linux-gnu-gcc"
           export CXX="aarch64-linux-gnu-g++"
           
@@ -62,8 +59,9 @@ jobs:
           export LDFLAGS="-static -L$LIBS_DIR/lib"
           export CFLAGS="-I$LIBS_DIR/include"
           export CXXFLAGS="-I$LIBS_DIR/include"
-          
+
           # 4. 运行 configure
+          # 移除了所有 Host/Target 相关的配置
           ./configure \
             --dest-cpu=arm64 \
             --fully-static \
@@ -71,7 +69,6 @@ jobs:
             --cross-compiling
             
           # 5. 开始编译
-          # QEMU 已经设置好，可以透明地运行生成的 ARM64 辅助工具
           make -j$(nproc)
 
       - name: 打包编译结果
