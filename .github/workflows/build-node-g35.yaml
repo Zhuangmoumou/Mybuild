@@ -1,4 +1,4 @@
-name: Build Node v18.19.1 (ARM64, 静态, 交叉编译)test
+name: Build Node v18.19.1 test
 
 on:
   push:
@@ -14,19 +14,19 @@ jobs:
       OUTPUT_FILENAME: node-v18.19.1-arm64-static-dictpen
 
     steps:
-      - name: 安装依赖
+      - name: 安装依赖和官方交叉编译工具链
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git-lfs wget
+          # 安装官方 aarch64 交叉编译工具链
+          sudo apt-get install -y build-essential git-lfs wget gcc-aarch64-linux-gnu g++-aarch64-linux-gnu python3-dev
 
       - name: 检出主仓库
         uses: actions/checkout@v4
 
       - name: 克隆 Qt 仓库 (保留，尽管 Node.js 编译不需要)
         run: git clone https://github.com/Lyrecoul/qt-5.15.2-for-aarch64-dictpen-linux.git
-
-      - name: 克隆 GCC 工具链仓库
-        run: git clone https://github.com/Lyrecoul/aarch64-dictpen-linux-gnu-gcc-toolchain.git
+        
+      # --- 移除自定义 GCC 仓库克隆步骤 ---
 
       - name: 克隆 Dictpen 库仓库
         run: git clone https://github.com/Lyrecoul/dictpen-libs.git
@@ -47,13 +47,12 @@ jobs:
         # 进入 Node.js 源码目录进行编译
         working-directory: ${{ github.workspace }}/node-${{ env.NODE_VERSION }}
         run: |
-          # 1. 设置构建所需的绝对路径环境变量 (使用 $GITHUB_WORKSPACE 保证路径正确)
-          TOOLCHAIN_DIR="${{ github.workspace }}/aarch64-dictpen-linux-gnu-gcc-toolchain/bin"
+          # 1. 设置库路径变量
           LIBS_DIR="${{ github.workspace }}/dictpen-libs"
           
-          # 2. 设置交叉编译器
-          export CC="$TOOLCHAIN_DIR/aarch64-dictpen-linux-gnu-gcc"
-          export CXX="$TOOLCHAIN_DIR/aarch64-dictpen-linux-gnu-g++"
+          # 2. 设置官方交叉编译器，系统会自动在 PATH 中找到它们
+          export CC="aarch64-linux-gnu-gcc"
+          export CXX="aarch64-linux-gnu-g++"
           
           # 3. 设置静态链接和库/头文件路径
           # -static 强制静态链接
@@ -80,21 +79,17 @@ jobs:
         run: |
           BUILD_DIR="${{ github.workspace }}/node-${{ env.NODE_VERSION }}"
           
-          # 确保输出目录存在
           mkdir -p build-output
-          
-          # 复制编译好的二进制文件到输出目录
           cp $BUILD_DIR/out/Release/node build-output/${{ env.OUTPUT_FILENAME }}
           
           echo "--- 验证二进制文件信息 ---"
           file build-output/${{ env.OUTPUT_FILENAME }}
           echo "--------------------------"
           
-          # 打包
           tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz build-output/
 
       - name: 上传 artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.OUTPUT_FILENAME }}
-          path: ${{ env.OUTPUT_FILENAME }}.tar.gz
+          path: ${{ env.OUTPUT_FILENAME }}.tar.gz```
