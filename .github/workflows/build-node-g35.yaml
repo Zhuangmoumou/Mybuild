@@ -1,0 +1,92 @@
+# 名称更新为交叉编译
+name: 编译 Node.js v18.19.1 (ARM64, 静态, 交叉编译)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_node_arm64_static_cross_compile: # Job ID 更新
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: v18.19.1
+      # 注意：编译环境为 ubuntu-latest，产物的 GLIBC 版本将与 Runner 系统一致 (例如 2.35)
+      # 文件名已更新以反映这一点
+      OUTPUT_FILENAME: node-v18.19.1-static-arm64-cross-compiled
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 初始化环境
+        run: |
+          # 移除了 Docker 相关命令，简化了环境清理
+          [[ -n "${AGENT_TOOLSDIRECTORY}" ]] && sudo rm -rf "${AGENT_TOOLSDIRECTORY}"
+          sudo -E apt-get -y update
+          sudo -E apt-get -y autoremove --purge
+          sudo -E apt-get clean
+          sudo -E timedatectl set-timezone "Asia/Shanghai"
+
+      # 此步骤为可选，用于创建虚拟磁盘以解决 Runner 磁盘空间不足的问题。如果不需要可以删除。
+      - name: (可选) 创建模拟磁盘以增加可用空间
+        run: |
+          mnt_size=$(expr $(df -h /mnt | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 1)
+          root_size=$(expr $(df -h / | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 4)
+          sudo truncate -s "${mnt_size}G" /mnt/mnt.img
+          sudo truncate -s "${root_size}G" /root.img
+          sudo losetup /dev/loop6 /mnt/mnt.img
+          sudo losetup /dev/loop7 /root.img
+          sudo pvcreate /dev/loop6
+          sudo pvcreate /dev/loop7
+          sudo vgcreate github /dev/loop6 /dev/loop7
+          sudo lvcreate -n runner -l 100%FREE github
+          sudo mkfs.xfs /dev/github/runner
+          sudo mkdir -p /builder
+          sudo mount /dev/github/runner /builder
+          sudo chown -R $USER:$USER /builder
+          df -Th
+
+      # QEMU 设置步骤已移除
+
+      - name: 下载 Node.js v18.19.1 源码
+        # 工作目录现在是 /builder (如果保留了上面的模拟磁盘步骤)
+        working-directory: /builder
+        run: |
+          wget https://nodejs.org/dist/${{ env.NODE_VERSION }}/node-${{ env.NODE_VERSION }}.tar.gz
+          tar xzf node-${{ env.NODE_VERSION }}.tar.gz
+
+      # 编译步骤已完全重写
+      - name: 安装交叉编译工具链并编译 Node.js
+        working-directory: /builder/node-${{ env.NODE_VERSION }}
+        run: |
+          # 1. 安装 aarch64 (ARM64) 交叉编译工具链和必要的构建工具
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu python3 build-essential
+
+          # 2. 设置环境变量，让构建系统使用交叉编译器
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+
+          # 3. 运行 configure，指定目标 CPU 为 arm64，并沿用之前的静态化参数
+          ./configure --dest-cpu=arm64 --fully-static --without-intl --enable-static
+
+          # 4. 开始编译
+          make -j$(nproc)
+
+      - name: 打包编译结果
+        working-directory: /builder
+        run: |
+          mkdir -p build-output
+          cp node-${{ env.NODE_VERSION }}/out/Release/node build-output/${{ env.OUTPUT_FILENAME }}
+          # 使用 file 命令验证产物是否为 ARM aarch64 架构的可执行文件
+          echo "--- 验证二进制文件信息 ---"
+          file build-output/${{ env.OUTPUT_FILENAME }}
+          echo "--------------------------"
+
+          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz build-output/
+
+      - name: 上传编译后的二进制文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.OUTPUT_FILENAME }}
+          path: /builder/${{ env.OUTPUT_FILENAME }}.tar.gz
