@@ -1,4 +1,4 @@
-name: Build Node v18.19.1 (ARM64, 静态, QEMU 辅助交叉编译)
+name: Build Node (ARM64, 静态, QEMU 辅助交叉编译)
 
 on:
   push:
@@ -76,7 +76,7 @@ jobs:
           BUILD_DIR="${{ github.workspace }}/node-${{ env.NODE_VERSION }}"
           
           mkdir -p build-output
-          cp $BUILD_DIR/out/Release build-output/${{ env.OUTPUT_FILENAME }}
+          cp $BUILD_DIR/out/ build-output/${{ env.OUTPUT_FILENAME }}
           
           echo "--- 验证二进制文件信息 ---"
           file build-output/${{ env.OUTPUT_FILENAME }}
