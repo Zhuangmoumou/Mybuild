@@ -47,6 +47,8 @@ jobs:
       - name: 交叉编译 Node.js
         working-directory: ${{ github.workspace }}/node-${{ env.NODE_VERSION }}
         run: |
+          mkdir ${{ github.workspace }}/node-install
+          ls ${{ github.workspace }}
           # 1. 设置库路径变量
           LIBS_DIR="${{ github.workspace }}/dictpen-libs"
           
@@ -67,22 +69,23 @@ jobs:
             --fully-static \
             --without-intl \
             --cross-compiling
-            
+            --perfix=${{ github.workspace }}/node-install
           # 5. 开始编译
           make -j$(nproc)
+          make install
 
       - name: 打包编译结果
         run: |
           BUILD_DIR="${{ github.workspace }}/node-${{ env.NODE_VERSION }}"
           
-          mkdir -p build-output
-          cp -r $BUILD_DIR/out/ build-output/${{ env.OUTPUT_FILENAME }}
+          #mkdir -p build-output
+          #cp -r $BUILD_DIR/out/ build-output/${{ env.OUTPUT_FILENAME }}
           
-          echo "--- 验证二进制文件信息 ---"
+          #echo "--- 验证二进制文件信息 ---"
           #file build-output/${{ env.OUTPUT_FILENAME }}
           echo "--------------------------"
           
-          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz -C build-output .
+          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz ${{ github.workspace }}/node-install
 
       - name: 上传 artifact
         uses: actions/upload-artifact@v4
