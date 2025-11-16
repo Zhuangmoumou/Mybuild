@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: v18.19.1
-      OUTPUT_FILENAME: node-v18.19.1-arm64-static-dictpen
+      NODE_VERSION: v20.18.0
+      OUTPUT_FILENAME: node-v20.18.0-arm64-static-dictpen
 
     steps:
       - name: 安装依赖和官方交叉编译工具链
@@ -76,13 +76,13 @@ jobs:
           BUILD_DIR="${{ github.workspace }}/node-${{ env.NODE_VERSION }}"
           
           mkdir -p build-output
-          cp $BUILD_DIR/out/Release/node build-output/${{ env.OUTPUT_FILENAME }}
+          cp $BUILD_DIR/out/Release build-output/${{ env.OUTPUT_FILENAME }}
           
           echo "--- 验证二进制文件信息 ---"
           file build-output/${{ env.OUTPUT_FILENAME }}
           echo "--------------------------"
           
-          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz build-output/
+          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz -C build-output
 
       - name: 上传 artifact
         uses: actions/upload-artifact@v4
