@@ -68,7 +68,7 @@ jobs:
             --dest-cpu=arm64 \
             --fully-static \
             --without-intl \
-            --cross-compiling
+            --cross-compiling \
             --perfix=${{ github.workspace }}/node-install
           # 5. 开始编译
           make -j$(nproc)
