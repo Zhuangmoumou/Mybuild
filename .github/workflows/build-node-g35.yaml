@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: v20.10.0
-      OUTPUT_FILENAME: node-v20.10.0-arm64-static-dictpen
+      NODE_VERSION: v18.16.1
+      OUTPUT_FILENAME: node-v18.16.1-arm64-static
 
     steps:
       - name: 安装依赖和官方交叉编译工具链
