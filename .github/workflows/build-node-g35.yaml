@@ -69,7 +69,7 @@ jobs:
             --fully-static \
             --without-intl \
             --cross-compiling \
-            --perfix=${{ github.workspace }}/node-install
+            --prefix=${{ github.workspace }}/node-install
           # 5. 开始编译
           make -j$(nproc)
           make install
