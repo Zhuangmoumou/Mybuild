@@ -69,17 +69,17 @@ jobs:
             --cross-compiling
             
           # 5. 开始编译
-          make -j8
+          make -j$(nproc)
 
       - name: 打包编译结果
         run: |
           BUILD_DIR="${{ github.workspace }}/node-${{ env.NODE_VERSION }}"
           
           mkdir -p build-output
-          cp $BUILD_DIR/out/ build-output/${{ env.OUTPUT_FILENAME }}
+          cp -r $BUILD_DIR/out/ build-output/${{ env.OUTPUT_FILENAME }}
           
           echo "--- 验证二进制文件信息 ---"
-          file build-output/${{ env.OUTPUT_FILENAME }}
+          #file build-output/${{ env.OUTPUT_FILENAME }}
           echo "--------------------------"
           
           tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz -C build-output
