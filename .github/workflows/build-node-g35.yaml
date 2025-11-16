@@ -56,9 +56,9 @@ jobs:
           export CXX="aarch64-linux-gnu-g++"
           
           # 3. 设置静态链接和库/头文件路径
-          #export LDFLAGS="-static -L$LIBS_DIR/lib"
-          #export CFLAGS="-I$LIBS_DIR/include"
-          #export CXXFLAGS="-I$LIBS_DIR/include"
+          export LDFLAGS="-static -L$LIBS_DIR/lib"
+          export CFLAGS="-I$LIBS_DIR/include"
+          export CXXFLAGS="-I$LIBS_DIR/include"
 
           # 4. 运行 configure
           # 移除了所有 Host/Target 相关的配置
