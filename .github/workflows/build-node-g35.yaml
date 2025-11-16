@@ -28,8 +28,8 @@ jobs:
           platforms: all
       # ---------------------------
 
-      - name: 检出主仓库
-        uses: actions/checkout@v4
+      #- name: 检出主仓库
+        # uses: actions/checkout@v4
         
       - name: 克隆 Dictpen 库仓库
         run: git clone https://github.com/Lyrecoul/dictpen-libs.git
