@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: v24.10.1
-      OUTPUT_FILENAME: node-v24.10.1-arm64-static
+      NODE_VERSION: v24.11.1
+      OUTPUT_FILENAME: node-v24.11.1-arm64-static
 
     steps:
       - name: 安装依赖和官方交叉编译工具链
@@ -58,9 +58,9 @@ jobs:
           export CXX="aarch64-linux-gnu-g++"
           
           # 3. 设置静态链接和库/头文件路径
-          export LDFLAGS="-static -L$LIBS_DIR/lib"
-          export CFLAGS="-I$LIBS_DIR/include"
-          export CXXFLAGS="-I$LIBS_DIR/include"
+          #export LDFLAGS="-static -L$LIBS_DIR/lib"
+          #export CFLAGS="-I$LIBS_DIR/include"
+          #export CXXFLAGS="-I$LIBS_DIR/include"
 
           # 4. 运行 configure
           # 移除了所有 Host/Target 相关的配置
@@ -85,7 +85,7 @@ jobs:
           #file build-output/${{ env.OUTPUT_FILENAME }}
           echo "--------------------------"
           
-          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz ${{ github.workspace }}/node-install
+          tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz -C ${{ github.workspace }} ./node-install
 
       - name: 上传 artifact
         uses: actions/upload-artifact@v4
