@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: v20.11.1
-      OUTPUT_FILENAME: node-v20.11.1-arm64-static
+      NODE_VERSION: v25.2.1
+      OUTPUT_FILENAME: node-v25.2.1-arm64-static
 
     steps:
       - name: 安装依赖和官方交叉编译工具链
