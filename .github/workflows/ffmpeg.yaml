@@ -41,7 +41,7 @@ jobs:
       - name: Install Cross-Compilation Toolchain and Dependencies
         run: |
           # 启用多架构支持
-          sudo dpkg --add-architecture arm64
+          sudo dpkg --add-architecture aarch64
           sudo apt update
           
           # 安装 ARM64 交叉编译工具链 (仍然需要，用于链接器和编译器)
