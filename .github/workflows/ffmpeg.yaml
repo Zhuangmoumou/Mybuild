@@ -23,7 +23,7 @@ jobs:
       # 创建安装目录
       - name: 创建依赖安装目录
         run: |
-          mkdir -p ${{ GITHUB_WORKSPACE }}/install
+          mkdir -p ${{ github.workspace }}/install
 
       - name: 克隆和编译 MPP
         run: |
@@ -33,7 +33,7 @@ jobs:
           
           # 3. 运行 CMake 配置
           cmake \
-            -DCMAKE_INSTALL_PREFIX=${{ GITHUB_WORKSPACE }}/install \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_SHARED_LIBS=OFF \
             -DBUILD_TEST=OFF \
@@ -43,17 +43,17 @@ jobs:
           make -j$(nproc)
           make install
           
-          echo "MPP 静态库安装完成于: ${{ GITHUB_WORKSPACE }}/install"
+          echo "MPP 静态库安装完成于: ${{ github.workspace }}/install"
       
       - name: 克隆和编译 rkrga
         run: |
-          cd ${{ GITHUB_WORKSPACE }}
+          cd ${{ github.workspace }}
           git clone -b jellyfin-rga --depth=1 https://github.com/nyanmisaka/rk-mirrors.git rkrga
           cd rkrga
           sed -i 's/shared/static/' meson.build
-          meson setup . build --prefix=${{ GITHUB_WORKSPACE }}/install --libdir=lib --buildtype=release -Dcpp_args=-fpermissive -Dlibdrm=false -Dlibrga_demo=false -Ddefault_library=static
+          meson setup . build --prefix=${{ github.workspace }}/install --libdir=lib --buildtype=release -Dcpp_args=-fpermissive -Dlibdrm=false -Dlibrga_demo=false -Ddefault_library=static
           ninja -C build install
-          sed -i 's/Libs: -L${libdir} -lrga -pthread/Libs: -L${libdir} -lrga -pthread -lstdc++ -lm/' ${{ GITHUB_WORKSPACE }}/install/lib/pkgconfig/librga.pc
+          sed -i 's/Libs: -L${libdir} -lrga -pthread/Libs: -L${libdir} -lrga -pthread -lstdc++ -lm/' ${{ github.workspace }}/install/lib/pkgconfig/librga.pc
           
       # --- 步骤 4: 编译 FFmpeg ---
       - name: 克隆和编译 FFmpeg (静态, 链接所有手动编译的依赖)
@@ -62,7 +62,7 @@ jobs:
           cd ffmpeg-rockchip
           git checkout 7.1
 
-          ./configure --prefix=${{ GITHUB_WORKSPACE }}/install/ffmpeg \
+          ./configure --prefix=${{ github.workspace }}/install/ffmpeg \
           --toolchain=hardened \
           --arch=arm64 \
           --enable-gpl \
@@ -79,8 +79,8 @@ jobs:
           --enable-libdrm \
           --enable-alsa \
           --enable-libv4l2 \
-          --extra-cflags="-I/usr/local/include -I/${{ GITHUB_WORKSPACE }}/install/include" \
-          --extra-ldflags="-L/usr/local/lib/aarch64-linux-gnu -L${{ GITHUB_WORKSPACE }}/install/lib -L/usr/local/lib -L/usr/lib/aarch64-linux-gnu" \
+          --extra-cflags="-I/usr/local/include -I/${{ github.workspace }}/install/include" \
+          --extra-ldflags="-L/usr/local/lib/aarch64-linux-gnu -L${{ github.workspace }}/install/lib -L/usr/local/lib -L/usr/lib/aarch64-linux-gnu" \
           --disable-doc
           
           # 编译和安装
