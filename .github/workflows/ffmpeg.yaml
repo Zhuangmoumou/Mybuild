@@ -41,7 +41,7 @@ jobs:
       - name: Install Cross-Compilation Toolchain and Dependencies
         run: |
           # 启用多架构支持
-          sudo dpkg --add-architecture aarch64
+          sudo echo -e '\n# 专门为 arm64 架构添加的源\nTypes: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports\nSuites: noble noble-updates noble-backports noble-security\nComponents: main restricted universe multiverse\nArchitectures: arm64\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' | sudo tee -a /etc/apt/sources.list.d/ubuntu.sources
           sudo apt update
           
           # 安装 ARM64 交叉编译工具链 (仍然需要，用于链接器和编译器)
