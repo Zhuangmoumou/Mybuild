@@ -59,7 +59,8 @@ jobs:
             pkg-config \
             yasm \
             nasm \
-            
+          
+          sudo apt search libx264-dev
           # 安装 FFmpeg 外部库的 ARM64 静态开发文件 (现在 QEMU 辅助下应该能找到)
           # 注意：这里我们重新启用并扩展了最初失败的步骤
           sudo apt install -y \
