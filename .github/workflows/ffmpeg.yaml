@@ -91,6 +91,7 @@ jobs:
           ./configure \
             --prefix=${{ env.EXTERNAL_INSTALL_DIR }} \
             --enable-static \
+            --enable-mp4 \
             --disable-shared \
             --host=${{ env.TOOLCHAIN_PREFIX }} \
             --cross-prefix=${{ env.TOOLCHAIN_PREFIX }}- \
@@ -103,7 +104,7 @@ jobs:
           echo "--- Building x265 ---"
           git clone https://bitbucket.org/multicoreware/x265_git.git x265_src
           cd x265_src
-          mkdir build && cd build
+          cd build
           
           # 重新创建 CMake 交叉编译工具链文件 (与 RKMpp 步骤类似)
           echo "set(CMAKE_SYSTEM_NAME Linux)" > toolchain.cmake
