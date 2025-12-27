@@ -36,8 +36,7 @@ jobs:
           
           # 安装官方 aarch64 交叉编译工具链
           sudo apt-get install -y build-essential git cmake wget \
-            gcc-${{ env.TOOLCHAIN_PREFIX }} g++-${{ env.TOOLCHAIN_PREFIX }} \
-            ${{ env.TOOLCHAIN_PREFIX }}-pkg-config
+            gcc-${{ env.TOOLCHAIN_PREFIX }} g++-${{ env.TOOLCHAIN_PREFIX }}
             
           # 安装 FFmpeg 依赖的 aarch64 静态开发库
           # 注意：这些库必须是针对 arm64 架构的
