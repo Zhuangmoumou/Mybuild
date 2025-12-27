@@ -74,7 +74,7 @@ jobs:
             libdrm-dev:arm64 \
             libegl1-mesa-dev:arm64 \
             libgles2-mesa-dev:arm64 \
-            libv4l2-dev:arm64 \
+            libv4l-dev:arm64 \
             libasound2-dev:arm64 \
             
           # 确保 pkg-config 能够找到交叉编译的库 (系统路径)
