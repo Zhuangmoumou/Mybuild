@@ -43,7 +43,7 @@ jobs:
           make -j$(nproc)
           make install
           
-          echo "MPP 静态库安装完成于: ${{ GITHUB_WORKSPACE }}/install"
+          echo "MPP 静态库安装完成于: $GITHUB_WORKSPACE/install" # <-- 修正 GITHUB_WORKSPACE 变量
       
       - name: 克隆和编译 rkrga
         run: |
