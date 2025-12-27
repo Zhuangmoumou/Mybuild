@@ -26,7 +26,12 @@ jobs:
       - name: 设置多架构和安装交叉编译工具链及依赖
         run: |
           # 启用多架构支持
-          sudo dpkg --add-architecture ${{ env.TARGET_ARCH }}
+          #sudo dpkg --add-architecture ${{ env.TARGET_ARCH }}
+          sudo echo -e '\n# ARM64 architecture sources\n' \
+            'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\n' \
+            'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\n' \
+            'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse\n' \
+            'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse' | sudo tee -a /etc/apt/sources.list
           sudo apt-get update
           
           # 安装官方 aarch64 交叉编译工具链
