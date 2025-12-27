@@ -64,7 +64,7 @@ jobs:
         run: |
           git clone ${{ env.MPP_REPO }} mpp_src
           cd mpp_src
-          mkdir build && cd build
+          cd build
           
           # CMake 交叉编译工具链文件
           echo "set(CMAKE_SYSTEM_NAME Linux)" > toolchain.cmake
