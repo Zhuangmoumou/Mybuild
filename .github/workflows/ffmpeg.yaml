@@ -155,11 +155,8 @@ jobs:
             \
             --disable-libmp3lame \
             --disable-libdrm \
-            --disable-egl \
-            --disable-opengles \
             --disable-alsa \
             --disable-libv4l2 \
-            --disable-opencl \
             \
             --extra-cflags="-I${{ env.MPP_INSTALL_DIR }}/include -I${{ env.EXTERNAL_INSTALL_DIR }}/include" \
             --extra-ldflags="-L${{ env.MPP_INSTALL_DIR }}/lib -L${{ env.EXTERNAL_INSTALL_DIR }}/lib" \
