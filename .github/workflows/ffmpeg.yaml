@@ -53,14 +53,14 @@ jobs:
           # 安装 FFmpeg 外部库的 ARM64 静态开发文件
           # 注意：这里假设 apt 仓库提供了这些库的静态版本 (.a)
           sudo apt install -y \
-            libx264-dev:arm64 \
-            libx265-dev:arm64 \
-            libmp3lame-dev:arm64 \
-            libdrm-dev:arm64 \
-            libegl1-mesa-dev:arm64 \
-            libgles2-mesa-dev:arm64 \
-            libv4l2-dev:arm64 \
-            libasound2-dev:arm64 \
+            libx264-dev:${{ env.TARGET_ARCH }} \
+            libx265-dev:${{ env.TARGET_ARCH }} \
+            libmp3lame-dev:${{ env.TARGET_ARCH }} \
+            libdrm-dev:${{ env.TARGET_ARCH }} \
+            libegl1-mesa-dev:${{ env.TARGET_ARCH }} \
+            libgles2-mesa-dev:${{ env.TARGET_ARCH }} \
+            libv4l2-dev:${{ env.TARGET_ARCH }} \
+            libasound2-dev:${{ env.TARGET_ARCH }} \
             
           # 启用多架构支持
           sudo dpkg --add-architecture ${{ env.TARGET_ARCH }}
