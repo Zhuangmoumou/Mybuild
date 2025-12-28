@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest-arm64
+    runs-on: ubuntu-latest
 
     steps:
       - name: 检出主仓库
@@ -67,7 +67,6 @@ jobs:
 
           ./configure --prefix=$GITHUB_WORKSPACE/install/ffmpeg \
           --toolchain=hardened \
-          --arch=arm64 \
           --enable-gpl \
           --enable-version3 \
           --enable-nonfree \
@@ -83,7 +82,7 @@ jobs:
           --enable-alsa \
           --enable-libv4l2 \
           --extra-cflags="-I/usr/local/include -I/$GITHUB_WORKSPACE/install/include" \
-          --extra-ldflags="-L/usr/local/lib/aarch64-linux-gnu -L$GITHUB_WORKSPACE/install/lib -L/usr/local/lib -L/usr/lib/aarch64-linux-gnu" \
+          --extra-ldflags="-L/usr/local/lib -L$GITHUB_WORKSPACE/install/lib -L/usr/local/lib -L/usr/lib" \
           --disable-doc
           
           # 编译和安装
