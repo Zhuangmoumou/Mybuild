@@ -77,7 +77,6 @@ jobs:
           --enable-libx264 \
           --enable-libx265 \
           --enable-libmp3lame \
-          --enable-rkmpp \
           --enable-rkrga \
           --enable-libdrm \
           --enable-alsa \
@@ -85,6 +84,7 @@ jobs:
           --extra-cflags="-I/usr/local/include -I/$GITHUB_WORKSPACE/install/include" \
           --extra-ldflags="-L/usr/local/lib -L$GITHUB_WORKSPACE/install/lib -L/usr/local/lib -L/usr/lib" \
           --disable-doc
+          #--enable-rkmpp
           
           # 编译和安装
           make -j$(nproc) | pv -l -s $(make -n | wc -l)
