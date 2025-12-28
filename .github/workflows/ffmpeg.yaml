@@ -54,6 +54,9 @@ jobs:
           git clone -b jellyfin-rga --depth=1 https://github.com/nyanmisaka/rk-mirrors.git rkrga
           cd rkrga
           sed -i 's/shared/static/' meson.build
+          sed -i '/librga = static_library/,/^)/ {
+            s/version : meson.project_version(),/#version : meson.project_version(),/
+            }' meson.build
           meson setup . build --prefix=$GITHUB_WORKSPACE/install --libdir=lib --buildtype=release -Dcpp_args=-fpermissive -Dlibdrm=false -Dlibrga_demo=false -Ddefault_library=static
           ninja -C build install
           sed -i 's/Libs: -L${libdir} -lrga -pthread/Libs: -L${libdir} -lrga -pthread -lstdc++ -lm/' $GITHUB_WORKSPACE/install/lib/pkgconfig/librga.pc
