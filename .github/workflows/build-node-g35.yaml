@@ -4,9 +4,9 @@ on:
   workflow_dispatch: # 允许手动触发
     inputs:
       node_version:
-        description: '要编译的 Node.js 版本 (例如: v20.11.0)'
+        description: '要编译的 Node.js 版本 (例如: v20.18.3)'
         required: true
-        default: 'v20.11.0' # 默认值，如果用户不输入，就用这个版本
+        default: 'v20.18.3' # 默认值，如果用户不输入，就用这个版本
         type: string
 
 jobs:
