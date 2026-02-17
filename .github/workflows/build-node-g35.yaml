@@ -1,17 +1,22 @@
-name: Build Node (ARM64, 静态, QEMU 辅助交叉编译)
+name: Build Node
 
 on:
-  #push:
-    #branches: [main]
   workflow_dispatch: # 允许手动触发
+    inputs:
+      node_version:
+        description: '要编译的 Node.js 版本 (例如: v20.11.0)'
+        required: true
+        default: 'v20.11.0' # 默认值，如果用户不输入，就用这个版本
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: v18.19.1
-      OUTPUT_FILENAME: node-v18.19.1-arm64-static
+      # 将 NODE_VERSION 和 OUTPUT_FILENAME 与用户输入的值关联起来
+      NODE_VERSION: ${{ github.event.inputs.node_version }}
+      OUTPUT_FILENAME: node-${{ github.event.inputs.node_version }}-arm64-static
 
     steps:
       - name: 安装依赖和官方交叉编译工具链
@@ -20,19 +25,10 @@ jobs:
           # 安装官方 aarch64 交叉编译工具链
           sudo apt-get install -y build-essential git-lfs wget gcc-aarch64-linux-gnu g++-aarch64-linux-gnu python3-dev
 
-      # --- 重新引入 QEMU 设置步骤 ---
-      # QEMU 允许 x86_64 主机透明地运行 ARM64 辅助工具，解决 Exec format error
       - name: 设置 QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
-      # ---------------------------
-
-      #- name: 检出主仓库
-        # uses: actions/checkout@v4
-        
-      #- name: 克隆 Dictpen 库仓库
-        # run: git clone https://github.com/Lyrecoul/dictpen-libs.git
 
       - name: 下载 Node.js 源码
         run: |
@@ -49,42 +45,25 @@ jobs:
         run: |
           mkdir ${{ github.workspace }}/node
           ls ${{ github.workspace }}
-          # 1. 设置库路径变量
-          #LIBS_DIR="${{ github.workspace }}/dictpen-libs"
-          
-          # 2. 设置目标平台的交叉编译器
-          # QEMU 存在时，只需要设置目标编译器即可
+
+          # 设置目标平台的交叉编译器
           export CC="aarch64-linux-gnu-gcc"
           export CXX="aarch64-linux-gnu-g++"
-          
-          # 3. 设置静态链接和库/头文件路径
-          #export LDFLAGS="-static -L$LIBS_DIR/lib"
-          #export CFLAGS="-I$LIBS_DIR/include"
-          #export CXXFLAGS="-I$LIBS_DIR/include"
 
-          # 4. 运行 configure
-          # 移除了所有 Host/Target 相关的配置
+          # 运行 configure
           ./configure \
             --dest-cpu=arm64 \
             --fully-static \
             --without-intl \
             --cross-compiling \
             --prefix=${{ github.workspace }}/node
-          # 5. 开始编译
+
+          # 开始编译
           make -j$(nproc)
           make install
 
       - name: 打包编译结果
         run: |
-          #BUILD_DIR="${{ github.workspace }}/node-${{ env.NODE_VERSION }}"
-          
-          #mkdir -p build-output
-          #cp -r $BUILD_DIR/out/ build-output/${{ env.OUTPUT_FILENAME }}
-          
-          #echo "--- 验证二进制文件信息 ---"
-          #file build-output/${{ env.OUTPUT_FILENAME }}
-          echo "--------------------------"
-          
           tar czf ${{ env.OUTPUT_FILENAME }}.tar.gz -C ${{ github.workspace }} node
 
       - name: 上传 artifact
